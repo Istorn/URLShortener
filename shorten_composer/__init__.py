@@ -1,1 +1,1 @@
-from shortener
+from .shortener import Shortener
