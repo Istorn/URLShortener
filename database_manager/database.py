@@ -107,8 +107,28 @@ class UrlDBHandler:
             return {"original_URL": "https://" + base_url.get("baseURL","") + path.get("path","") + "?" + get_params("getParams",""), "TTLDateTime":shorten_url.get("TTLDateTime")}
         else:
             # no shorten URL is found 
-            return ""
+            return "not_found"
         
+    # check if a shortened URL already exists
+        
+    def check_existing_shortened(self,element_key):
+        result=self.db_handler.retrieve_document_by_element_key("shortened",element_key)
+        return result
+    
+    # Check if a base URL already exists
+    def check_existing_baseURL(self,element_key):
+        result=self.db_handler.retrieve_document_by_element_key("baseURL",element_key)
+        return result
+    
+    # Check if a path already exists
+    def check_existing_path(self,element_key):
+        result=self.db_handler.retrieve_document_by_element_key("path",element_key)
+        return result
+    
+    # Check if a getParams list already exists
+    def check_existing_getParams(self,element_key):
+        result=self.db_handler.retrieve_document_by_element_key("getParams",element_key)
+        return result
 
     # The update in this use case is mostly limited to renewing the TTLDateTime field
     def renew_TTLDateTime_document(self,document_name,element_key):
@@ -125,14 +145,14 @@ class UrlDBHandler:
     def return_lowest_free_element_key_by_length(self,document_name,element_length):
         
         # If we reached out the number of existing keys we have to return empty, otherwise we search for the 
-        if self.get_num_documents_by_element_key_length(document_name,element_length) == (62 ** element_length):
+        if self.get_num_documents_by_element_key_length(document_name,element_length) == (62 ** int(element_length)):
             return None
         else:
-            return self.db_handler.search_free_key(document_name,62**element_length)
+            return self.db_handler.search_free_key(document_name,62 ** int(element_length))
 
     # Method for the garbage collector to delete all of the expired documents in a certain collection
     def garbage_collection_by_document_type(self,document_name,garbage_TTL):
         current_date_time=datetime.now()
-        past_delta_time=current_date_time-timedelta(garbage_TTL)
+        past_delta_time=current_date_time-timedelta(seconds=garbage_TTL)
         return  self.db_handler.delete_expired_documents(document_name,past_delta_time)
         
