@@ -16,6 +16,11 @@ class MongoDBHandler:
         result=collection.delete_one({"elementKey":str(element_key) })
         return result.deleted_count
     
+    def retrieve_shortened_by_its_elements(self,base_url_element_key,path_element_key,get_params_element_key):
+        collection=self.db["shortened"]
+        result=collection.find({"baseURL_elementKey": base_url_element_key, "path_elementKey": path_element_key, "getParams_elementKey": get_params_element_key})
+        return result is None
+
     def retrieve_base_url(self,base_url):
         collection=self.db["baseURL"]
         result=collection.find_one({"baseURL": base_url})
@@ -23,7 +28,7 @@ class MongoDBHandler:
     
     def retrieve_path(self,path):
         collection=self.db["path"]
-        result=collection.find_one({"baspatheURL": path})
+        result=collection.find_one({"path": path})
         return result is None
     
     def retrieve_getParams(self,getParams):
@@ -96,17 +101,17 @@ class UrlDBHandler:
     
     def create_base_url(self, element_key, base_url):
         current_date_time=datetime.now()
-        document={"elementKey": element_key, "baseURL": base_url, "TTLDateTime":current_date_time}
+        document={"elementKey": str(element_key), "baseURL": base_url, "TTLDateTime":current_date_time}
         return self.db_handler.create_document("baseURL", document)
 
     def create_path(self, element_key, path):
         current_date_time=datetime.now()
-        document={"elementKey": element_key, "path": path, "TTLDateTime": current_date_time}
+        document={"elementKey": str(element_key), "path": path, "TTLDateTime": current_date_time}
         return self.db_handler.create_document("path", document)
 
     def create_get_params(self, element_key, get_params):
         current_date_time=datetime.now()
-        document={"elementKey": element_key, "getParams": get_params, "TTLDateTime": current_date_time}
+        document={"elementKey": str(element_key), "getParams": get_params, "TTLDateTime": current_date_time}
         return self.db_handler.create_document("getParams", document)
 
     # Method to return the base URL, the path and the GET parameters by a given elementKey for the URL
@@ -171,3 +176,7 @@ class UrlDBHandler:
         past_delta_time=current_date_time-timedelta(seconds=garbage_TTL)
         return  self.db_handler.delete_expired_documents(document_name,past_delta_time)
         
+    # method to retrieve an already existing shortened by its three elements
+
+    def get_shortened_by_elements(self,base_url_element_key,path_element_key,get_params_element_key):
+        return self.db_handler.retrieve_shortened_by_its_elements(base_url_element_key,path_element_key,get_params_element_key)
