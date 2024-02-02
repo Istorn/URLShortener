@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 
 
 class Shortener:
-    def __init__(self, url_db_handler: UrlDBHandler, garbage_TTL):
+    def __init__(self, url_db_handler: UrlDBHandler, garbage_TTL,key_size=1):
         self.url_db_handler = url_db_handler
         self.garbage_TTL = garbage_TTL
+        self.key_size=key_size
 
     # Get the original URL from the database
     def compose_original_url(self, shortened_url: str):
@@ -110,7 +111,7 @@ class Shortener:
     def get_most_near_free_key_by_document_type(self,document_type,string_to_store):
         limit=1
         key_free=""
-        while limit<5 and key_free=="":
+        while limit<self.key_size+1 and key_free=="":
             new_element_key=self.url_db_handler.return_lowest_free_element_key_by_length(document_type,limit)
             if new_element_key is None:
                 limit+=1
