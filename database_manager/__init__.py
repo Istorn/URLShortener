@@ -1,1 +1,1 @@
-from .database import UrlHandler
+from .database import UrlDBHandler
