@@ -58,13 +58,13 @@ class MongoDBHandler:
         result=collection.delete_many({"TTLDateTime": {"$lt": time_passed}}).deleted_count
         return result
 
-class UrlHandler:
+class UrlDBHandler:
 
     _single_instance=None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance=super(UrlHandler, cls).__new__(cls, *args, **kwargs)
+            cls._instance=super(UrlDBHandler, cls).__new__(cls, *args, **kwargs)
         return cls._instance
     
     def __init__(self, database_url, database_name):
