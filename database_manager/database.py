@@ -180,9 +180,7 @@ class UrlDBHandler:
             return self.db_handler.search_free_key(document_name,62 ** int(element_length))
 
     # Method for the garbage collector to delete all of the expired documents in a certain collection
-    def garbage_collection_by_document_type(self,document_name,garbage_TTL):
-        current_date_time=datetime.now()
-        past_delta_time=current_date_time-timedelta(seconds=garbage_TTL)
+    def garbage_collection_by_document_type(self,document_name,past_delta_time):
         return  self.db_handler.delete_expired_documents(document_name,past_delta_time)
         
     # method to retrieve an already existing shortened by its three elements
