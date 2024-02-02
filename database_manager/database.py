@@ -15,6 +15,21 @@ class MongoDBHandler:
         collection=self.db[collection_name]
         result=collection.delete_one({"elementKey":str(element_key) })
         return result.deleted_count
+    
+    def retrieve_base_url(self,base_url):
+        collection=self.db["baseURL"]
+        result=collection.find_one({"baseURL": base_url})
+        return result is None
+    
+    def retrieve_path(self,path):
+        collection=self.db["path"]
+        result=collection.find_one({"baspatheURL": path})
+        return result is None
+    
+    def retrieve_getParams(self,getParams):
+        collection=self.db["getParams"]
+        result=collection.find_one({"getParams": getParams})
+        return result is None
 
     def retrieve_document_by_element_key(self, collection_name, element_key):
         collection=self.db[collection_name]
@@ -116,18 +131,18 @@ class UrlDBHandler:
         return result
     
     # Check if a base URL already exists
-    def check_existing_baseURL(self,element_key):
-        result=self.db_handler.retrieve_document_by_element_key("baseURL",element_key)
+    def check_existing_baseURL(self,base_url):
+        result=self.db_handler.retrieve_base_url(base_url)
         return result
     
     # Check if a path already exists
-    def check_existing_path(self,element_key):
-        result=self.db_handler.retrieve_document_by_element_key("path",element_key)
+    def check_existing_path(self,path):
+        result=self.db_handler.retrieve_path(path)
         return result
     
     # Check if a getParams list already exists
-    def check_existing_getParams(self,element_key):
-        result=self.db_handler.retrieve_document_by_element_key("getParams",element_key)
+    def check_existing_getParams(self,getParams):
+        result=self.db_handler.retrieve_getParams(getParams)
         return result
 
     # The update in this use case is mostly limited to renewing the TTLDateTime field
