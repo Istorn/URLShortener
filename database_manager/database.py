@@ -3,38 +3,38 @@ from datetime import datetime, timedelta
 
 class MongoDBHandler:
     def __init__(self, database_url, database_name):
-        self.client = MongoClient(database_url)
-        self.db = self.client[database_name]
+        self.client=MongoClient(database_url)
+        self.db=self.client[database_name]
 
     def create_document(self, collection_name, document):
-        collection = self.db[collection_name]
-        result = collection.insert_one(document)
+        collection=self.db[collection_name]
+        result=collection.insert_one(document)
         return result.inserted_id
 
     def delete_document(self, collection_name, element_key):
-        collection = self.db[collection_name]
-        result = collection.delete_one({"elementKey":str(element_key) })
+        collection=self.db[collection_name]
+        result=collection.delete_one({"elementKey":str(element_key) })
         return result.deleted_count
 
     def retrieve_document_by_element_key(self, collection_name, element_key):
-        collection = self.db[collection_name]
+        collection=self.db[collection_name]
         result=collection.find_one({"elementKey": element_key})
         return result is None
     
     def count_documents_by_query(self,collection_name, query=None):
-        collection = self.db[collection_name]
+        collection=self.db[collection_name]
         return collection.count_documents(query)
     
     def check_document_existance(self, collection_name, element_key):
-        collection = self.db[collection_name]
+        collection=self.db[collection_name]
         result=collection.find_one({"elementKey": element_key})
         return result is None
 
 
     # Update mostly limited to renew the TTLDateTime
     def update_document(self, collection_name, element_key, new_TTL_date_time):
-        collection = self.db[collection_name]
-        result = collection.update_one({"elementKey": str(element_key)},{"$set": {"TTLDateTime": new_TTL_date_time}})
+        collection=self.db[collection_name]
+        result=collection.update_one({"elementKey": str(element_key)},{"$set": {"TTLDateTime": new_TTL_date_time}})
         return result.modified_count
 
     # Apply binary search according to the elementKeyLength: 62 elements to the power of elementKeyLength. In case of full sequence it returns None
@@ -46,7 +46,7 @@ class MongoDBHandler:
             
             middle=(start + end) // 2
             if (self.check_document_existance(collection_name,str(middle)) is not None):
-                start = middle +1
+                start=middle +1
             else:
                 end=middle-1
 
@@ -54,33 +54,44 @@ class MongoDBHandler:
 
     # Delete all of the document of a certain collection having expired TTL
     def delete_expired_documents(self, collection_name, time_passed):
-        collection = self.db[collection_name]
+        collection=self.db[collection_name]
         result=collection.delete_many({"TTLDateTime": {"$lt": time_passed}}).deleted_count
         return result
 
 class UrlHandler:
+
+    _single_instance=None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance=super(UrlHandler, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+    
     def __init__(self, database_url, database_name):
-        self.db_handler = MongoDBHandler(database_url, database_name)
+        if not hasattr(self, 'initialized'):
+            self.db_handler=MongoDBHandler(database_url, database_name)
+            self.initialized=True
+        
 
     # Creator for the for document entities
     def create_shortened_url(self, base_url, path, get_params):
         current_date_time=datetime.now()
-        document = {"elementKey": (str(base_url) + str(path) + str(get_params)), "baseURL_elementKey": str(base_url), "path_elementKey": str(path), "getParams_elementKey": str(get_params), "TTLDateTime": current_date_time}
+        document={"elementKey": (str(base_url) + str(path) + str(get_params)), "baseURL_elementKey": str(base_url), "path_elementKey": str(path), "getParams_elementKey": str(get_params), "TTLDateTime": current_date_time}
         return self.db_handler.create_document("shortened", document)
     
     def create_base_url(self, element_key, base_url):
         current_date_time=datetime.now()
-        document = {"elementKey": element_key, "baseURL": base_url, "TTLDateTime":current_date_time}
+        document={"elementKey": element_key, "baseURL": base_url, "TTLDateTime":current_date_time}
         return self.db_handler.create_document("baseURL", document)
 
     def create_path(self, element_key, path):
         current_date_time=datetime.now()
-        document = {"elementKey": element_key, "path": path, "TTLDateTime": current_date_time}
+        document={"elementKey": element_key, "path": path, "TTLDateTime": current_date_time}
         return self.db_handler.create_document("path", document)
 
     def create_get_params(self, element_key, get_params):
         current_date_time=datetime.now()
-        document = {"elementKey": element_key, "getParams": get_params, "TTLDateTime": current_date_time}
+        document={"elementKey": element_key, "getParams": get_params, "TTLDateTime": current_date_time}
         return self.db_handler.create_document("getParams", document)
 
     # Method to return the base URL, the path and the GET parameters by a given elementKey for the URL
@@ -107,7 +118,7 @@ class UrlHandler:
 
     # Return number of documents by the given elementKey length
     def get_num_documents_by_element_key_length(self, document_name,element_length):
-        query = {"$expr": {"$eq": [{"$strLenCP": "$elementKey"}, element_length]}}
+        query={"$expr": {"$eq": [{"$strLenCP": "$elementKey"}, element_length]}}
         return self.db_handler.count_documents_by_query(document_name,element_length, query)
     
     # Return a free elementKey according to the elementKey length so that it will be returned the lowest one
