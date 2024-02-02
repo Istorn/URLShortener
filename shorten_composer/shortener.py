@@ -9,7 +9,8 @@ class Shortener:
 
     # Get the original URL from the database
     def compose_original_url(self, shortened_url: str):
-        result = self.url_db_handler.get_original_url(shortened_url)
+        numerical_shortened_url=self.alphanumerical_to_element_key(shortened_url)
+        result = self.url_db_handler.get_original_url(numerical_shortened_url)
 
         # It means that exists in the DB
         if result != "not_found":
@@ -57,7 +58,7 @@ class Shortener:
         # Same for getParams
 
         if decomposed_url["getParams"] != "":
-            get_params=self.url_db_handler.check_existing_path(decomposed_url["getParams"])
+            get_params=self.url_db_handler.check_existing_getParams(decomposed_url["getParams"])
 
             if get_params is None:
                 get_params=self.get_most_near_free_key_by_document_type("getParams",decomposed_url["getParams"])
@@ -76,7 +77,7 @@ class Shortener:
 
         # Return the shortened link
 
-        return shorten.get("elementKey")
+        return self.element_key_to_alphanumerical(shorten.get("elementKey")) 
         
 
 
@@ -89,7 +90,7 @@ class Shortener:
         translated_key = ""
 
         for element in element_key:
-            translated_key += translating_characters[element]
+            translated_key += translating_characters[int(element)-1]
 
         return translated_key
 
@@ -100,7 +101,7 @@ class Shortener:
         element_key = ""
 
         for splitted in splitted_alphanumerical:
-            element_key += translating_characters.index(splitted)
+            element_key += str(translating_characters.index(splitted))
 
         return element_key
 
@@ -118,6 +119,11 @@ class Shortener:
 
         # If we have a free key for the base URL we keep going otherwise we interrupt
         if key_free!="":
-            return self.url_db_handler.create_base_url(key_free,string_to_store)
+            if document_type == "baseURL":
+                return self.url_db_handler.create_base_url(key_free,string_to_store)
+            elif document_type == "path":
+                return self.url_db_handler.create_path(key_free,string_to_store)
+            else:
+                return self.url_db_handler.create_get_params(key_free,string_to_store)
         else:
             return False
