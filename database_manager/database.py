@@ -104,7 +104,7 @@ class UrlDBHandler:
             get_params=self.db_handler.retrieve_document_by_element_key("baseURL",shorten_url.get("get_params_elementKey"))
 
             # Build up the final string: we default the strings as empty
-            return {"original_URL": base_url.get("baseURL","") + path.get("path","") + get_params("getParams",""), "TTLDateTime":shorten_url.get("TTLDateTime")}
+            return {"original_URL": "https://" + base_url.get("baseURL","") + path.get("path","") + "?" + get_params("getParams",""), "TTLDateTime":shorten_url.get("TTLDateTime")}
         else:
             # no shorten URL is found 
             return ""
