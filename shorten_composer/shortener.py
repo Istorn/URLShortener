@@ -101,7 +101,7 @@ class Shortener:
         element_key = ""
 
         for splitted in splitted_alphanumerical:
-            element_key += str(translating_characters.index(splitted))
+            element_key += str(translating_characters.index(splitted)+1)
 
         return element_key
 
