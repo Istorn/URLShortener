@@ -129,7 +129,7 @@ class UrlDBHandler:
             # Take each sub-document
             base_url=self.db_handler.retrieve_document_by_element_key("baseURL",shorten_url.get("baseURL_elementKey"))
             path=self.db_handler.retrieve_document_by_element_key("path",shorten_url.get("path_elementKey"))
-            get_params=self.db_handler.retrieve_document_by_element_key("baseURL",shorten_url.get("getParams_elementKey"))
+            get_params=self.db_handler.retrieve_document_by_element_key("getParams",shorten_url.get("getParams_elementKey"))
 
             # Build up the final string: we default the strings as empty
             return {"original_URL": "https://" + base_url.get("baseURL","") + path.get("path","") + "?" + get_params.get("getParams",""), "TTLDateTime":shorten_url.get("TTLDateTime")}
