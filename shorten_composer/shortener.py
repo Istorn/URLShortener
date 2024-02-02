@@ -25,7 +25,7 @@ class Shortener:
 
     # Shorten the URL
     def shorten_url(self, decomposed_url):
-        # Check if the decomposed_url is already existing on the DB
+       ''' Check if the decomposed_url is already existing on the DB
         element_key=self.alphanumerical_to_element_key(decomposed_url)
         existing_shortened = self.db_connection.check_existing_shortened(element_key)
         if existing_shortened is not None:
@@ -40,13 +40,17 @@ class Shortener:
                 # Return the result
                 existing_shortened["original_URL"]
         else:
+        '''
+        
+        # Check if the baseURL, path and getParams are already existing into the DB
+        existing_base_url=self.db_connection.check_existing_baseURL(decomposed_url["baseURL"])
+        existing_path=self.db_connection.check_existing_path(decomposed_url["path"])
+        existing_get_params=self.db_connection.check_existing_getParams(decomposed_url["getParams"])
+       
+       # If all of them are not None, it means that the shorten URL may already exist
+       
 
-            # Check if the baseURL is already existing
-
-            # Check if the path is already existing
-
-            # Check if the GET parameters are already existing
-
+        
     # Generate the equivalent alphanumerical string by the given numeric key
     def element_key_to_alphanumerical(self, element_key):
         translating_characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
