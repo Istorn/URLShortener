@@ -63,9 +63,9 @@ class UrlDBHandler:
     _single_instance=None
 
     def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance=super(UrlDBHandler, cls).__new__(cls, *args, **kwargs)
-        return cls._instance
+        if not cls._single_instance:
+            cls._single_instance=super(UrlDBHandler, cls).__new__(UrlDBHandler)
+        return cls._single_instance
     
     def __init__(self, database_url, database_name):
         if not hasattr(self, 'initialized'):
@@ -104,7 +104,7 @@ class UrlDBHandler:
             get_params=self.db_handler.retrieve_document_by_element_key("baseURL",shorten_url.get("get_params_elementKey"))
 
             # Build up the final string: we default the strings as empty
-            return base_url.get("baseURL","") + path.get("path","") + get_params("getParams","")
+            return {"original_URL": base_url.get("baseURL","") + path.get("path","") + get_params("getParams",""), "TTLDateTime":shorten_url.get("TTLDateTime")}
         else:
             # no shorten URL is found 
             return ""
