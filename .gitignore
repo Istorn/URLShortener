@@ -1,2 +1,6 @@
 **/__pycache__/
+database_manager/__pycache__/*
+url_validation/__pycache__/*
+shorten_composer/__pycache__/*
+garbage_collector_database/__pycache__/*
 
