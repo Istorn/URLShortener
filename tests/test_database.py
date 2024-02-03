@@ -65,7 +65,7 @@ class TestUrlDBHandler(unittest.TestCase):
     # Test the generation of complete, partial and check if original is the same as provided as input
     def test_create_shortened_complete_url(self):
     
-        
+        self.url_db_handler.delete_database()
         # Test complete URL
 
         shortened_base_url=self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
@@ -86,6 +86,7 @@ class TestUrlDBHandler(unittest.TestCase):
         assert result["TTLDateTime"] < datetime.now()
     
     def test_number_of_existing_documents_by_category(self):
+        
         # Create one element
         self.url_db_handler.delete_database()
         shortened_base_url=self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
@@ -100,15 +101,17 @@ class TestUrlDBHandler(unittest.TestCase):
 
     def test_garbage_collection_by_document(self):
         
-        # Create one element
         self.url_db_handler.delete_database()
-        self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
-        self.url_db_handler.create_path(self.dummy_element_key,self.path).get("elementKey")
-        self.url_db_handler.create_get_params(self.dummy_element_key,self.get_params).get("elementKey")
+        # Create one element
         
-        time.sleep(6)
-        for document_type in ["baseURL","path","getParams"]:
+        shortened_base_url=self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
+        shortened_path=self.url_db_handler.create_path(self.dummy_element_key,self.path).get("elementKey")
+        shortened_get_params=self.url_db_handler.create_get_params(self.dummy_element_key,self.get_params).get("elementKey")
+        result = self.url_db_handler.create_shortened_url(shortened_base_url, shortened_path, shortened_get_params)
+    
+        time.sleep(2)
+        for document_type in ["baseURL","path","getParams","shortened"]:
             
-            assert self.url_db_handler.garbage_collection_by_document_type(document_type,1) == 1
+            assert self.url_db_handler.garbage_collection_by_document_type(document_type,datetime.now()) == 1
 if __name__ == '__main__':
     unittest.main()
