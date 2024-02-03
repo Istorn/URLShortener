@@ -1,4 +1,4 @@
-
+import time
 import json
 config_file="./config.json"
 def load_config():
@@ -12,12 +12,8 @@ def save_config(config):
     with open(config_file, "w") as file:
         json.dump(config, file)
 
-def get_DB_garbage_collector_TTL(args):
-    # If the values are provided by CLI we use them
-    if args.database and args.garbage_collector_TTL and encryption_key_size:
-        return args.database, args.garbage_collector_TTL, args.encryption_key_size
-
-    # Otherwise from config local file
+def get_DB_garbage_collector_TTL():
+  
     config = load_config()
     db_base_URL = config.get("mongoDB_URL")
     db_port = config.get("mongoDB_port")
@@ -29,3 +25,9 @@ def get_DB_garbage_collector_TTL(args):
     # Update configuration
     save_config(config)
     return db_base_URL, db_port, database_name, garbage_ttl, encryption_key_size
+
+def garbage_collector_runner(garbage_collector_instance,garbage_collector_TTL):
+    while True:
+        print("Running garbage collector")
+        garbage_collector_instance.collect_garbage_from_DB()
+        time.sleep(garbage_collector_TTL)

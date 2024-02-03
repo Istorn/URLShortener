@@ -1,7 +1,1 @@
-{
-    "mongoDB_URL": "localhost",
-    "mongoDB_port": "27017",
-    "mongoDB_database": "test_database2",
-    "garbage_collector_TTL": 120,
-    "encryption_key_size": 2
-}
+{"mongoDB_URL": "localhost", "mongoDB_port": "27017", "mongoDB_database": "test_database2", "garbage_collector_TTL": 120, "encryption_key_size": 2}

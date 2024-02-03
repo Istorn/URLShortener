@@ -166,14 +166,16 @@ class UrlDBHandler:
                 path_element_key=path.get("elementKey")
             else:
                 path_element_key=""
-                
+        else:
+                path_element_key=""        
         if decomposed_url["getParams"] != "":
             get_params=self.db_handler.retrieve_getParams(decomposed_url["getParams"])
             if get_params is not None:
                 get_params_element_key=get_params.get("elementKey")
             else:
                 get_params_element_key=""
-        
+        else:
+                get_params_element_key=""
         return self.db_handler.retrieve_shortened_by_its_elements(base_url_element_key,path_element_key,get_params_element_key)
         
     # check if a shortened URL already exists

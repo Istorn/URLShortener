@@ -1,6 +1,6 @@
 from database_manager import UrlDBHandler
 from datetime import datetime, timedelta
-
+from url_validation import is_valid_url
 
 class Shortener:
     def __init__(self, url_db_handler: UrlDBHandler, garbage_TTL,key_size=1):
@@ -26,76 +26,86 @@ class Shortener:
         return "link_not_found"
 
     # Shorten the URL
-    def shorten_url(self, decomposed_url):
+    def shorten_url(self, url_to_shorten):
         
-        # Check if the shorten URL already exists
-        already_existing_shortened=self.url_db_handler.get_shorten_by_basic_elements(decomposed_url)
-        if already_existing_shortened is not None:
-            # Check if it's expired
-            expiration_datetime = already_existing_shortened["TTLDateTime"] + timedelta(seconds=self.garbage_TTL)
-            if expiration_datetime > datetime.now():
-                self.url_db_handler.renew_TTLDateTime_document("shortened",already_existing_shortened.get("elementKey"))
-                return self.element_key_to_alphanumerical(already_existing_shortened.get("elementKey"))
+        # Check if URL is valid
 
-            else:
-                return "link_expired"
-            
-        # Check if we already maxed out the keys for shortened URL
-
-        if self.get_most_near_free_key_by_document_type("shortened","") == False:
-            return "MAX_GENERATED_KEY_FOR_SHORTEN_LINK"
-
-        # Check if baseURL already exists and in case renew its TTL
-        base_url=self.url_db_handler.check_existing_baseURL(decomposed_url["baseURL"])
-
-        if base_url is None:
-            base_url=self.get_most_near_free_key_by_document_type("baseURL",decomposed_url["baseURL"])
-            if base_url == False:
-                return "MAX_GENERATED_KEY_FOR_BASE_URL"
-            else:
-                base_url=base_url.get("elementKey")
-        else:
-            base_url=self.url_db_handler.renew_TTLDateTime_document("baseURL",base_url.get("elementKey")).get("elementKey")
+        decomposed_url=is_valid_url(url_to_shorten)
         
-        # Check if we need to create a path element
-            
-        if decomposed_url["path"] != "":
-            path=self.url_db_handler.check_existing_path(decomposed_url["path"])
-
-            if path is None:
-                path=self.get_most_near_free_key_by_document_type("path",decomposed_url["path"])
-                if path == False:
-                    return "MAX_GENERATED_KEY_FOR_PATH"
-                else:
-                    path=path.get("elementKey")
-            else:
-                path=self.url_db_handler.renew_TTLDateTime_document("path",path.get("elementKey")).get("elementKey")
+        if decomposed_url == False:
+            return "The inserted URL is not valid."
         else:
-            path=""
-
-        # Same for getParams
-
-        if decomposed_url["getParams"] != "":
-            get_params=self.url_db_handler.check_existing_getParams(decomposed_url["getParams"])
-
-            if get_params is None:
-                get_params=self.get_most_near_free_key_by_document_type("getParams",decomposed_url["getParams"])
-                if get_params == False:
-                    return "MAX_GENERATED_KEY_FOR_QUERY_PARAMS"
-                else:
-                    get_params=get_params.get("elementKey")
-            else:
-                get_params=self.url_db_handler.renew_TTLDateTime_document("getParams",get_params.get("elementKey")).get("elementKey")
-        else:
-            get_params=""
-
-        # Generate the shorten
             
-        shorten=self.url_db_handler.create_shortened_url(base_url,path,get_params)
+            # Check if the shorten URL already exists
+            already_existing_shortened=self.url_db_handler.get_shorten_by_basic_elements(decomposed_url)
+            if already_existing_shortened is not None:
+                # Check if it's expired
+                expiration_datetime = already_existing_shortened["TTLDateTime"] + timedelta(seconds=self.garbage_TTL)
+                if expiration_datetime <= datetime.now():
+                    self.url_db_handler.renew_TTLDateTime_document("shortened",already_existing_shortened.get("elementKey"))
+                    return self.element_key_to_alphanumerical(already_existing_shortened.get("elementKey"))
 
-        # Return the shortened link
+                else:
+                    return "link_expired"
+                
+            # Check if we already maxed out the keys for shortened URL
 
-        return self.element_key_to_alphanumerical(shorten.get("elementKey")) 
+            if self.get_most_near_free_key_by_document_type("shortened","") == False:
+                return "MAX_GENERATED_KEY_FOR_SHORTEN_LINK"
+
+            # Check if baseURL already exists and in case renew its TTL
+            base_url=self.url_db_handler.check_existing_baseURL(decomposed_url["baseURL"])
+
+            if base_url is None:
+                base_url=self.get_most_near_free_key_by_document_type("baseURL",decomposed_url["baseURL"])
+                if base_url == False:
+                    return "MAX_GENERATED_KEY_FOR_BASE_URL"
+                else:
+                    base_url=base_url.get("elementKey")
+            else:
+                base_url=self.url_db_handler.renew_TTLDateTime_document("baseURL",base_url.get("elementKey")).get("elementKey")
+            
+            # Check if we need to create a path element
+                
+            if decomposed_url["path"] != "":
+                path=self.url_db_handler.check_existing_path(decomposed_url["path"])
+
+                if path is None:
+                    path=self.get_most_near_free_key_by_document_type("path",decomposed_url["path"])
+                    if path == False:
+                        return "MAX_GENERATED_KEY_FOR_PATH"
+                    else:
+                        path=path.get("elementKey")
+                else:
+                    path=self.url_db_handler.renew_TTLDateTime_document("path",path.get("elementKey")).get("elementKey")
+            else:
+                path=""
+
+            # Same for getParams
+
+            if decomposed_url["getParams"] != "":
+                get_params=self.url_db_handler.check_existing_getParams(decomposed_url["getParams"])
+
+                if get_params is None:
+                    get_params=self.get_most_near_free_key_by_document_type("getParams",decomposed_url["getParams"])
+                    if get_params == False:
+                        return "MAX_GENERATED_KEY_FOR_QUERY_PARAMS"
+                    else:
+                        get_params=get_params.get("elementKey")
+                else:
+                    get_params=self.url_db_handler.renew_TTLDateTime_document("getParams",get_params.get("elementKey")).get("elementKey")
+            else:
+                get_params=""
+
+            # Generate the shorten
+                
+            shorten=self.url_db_handler.create_shortened_url(base_url,path,get_params)
+
+            # Return the shortened link
+
+            return self.element_key_to_alphanumerical(shorten.get("elementKey")) 
+
+        
         
 
 
