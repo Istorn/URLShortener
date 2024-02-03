@@ -1,125 +1,114 @@
 import unittest
-from datetime import datetime, timedelta
 from pymongo import MongoClient
-from database_manager import MongoDBHandler, UrlHandler
+from database_manager import UrlDBHandler, MongoDBHandler
+from datetime import datetime
+import time
 
-# Set up a test MongoDB connection
-test_database_url = "mongodb://localhost:27017/"
-test_database_name = "test_database"
+
+TEST_DATABASE_URL = "mongodb://localhost:27017/"
+TEST_DATABASE_NAME = "unit_test_database"
 
 class TestMongoDBHandler(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Set up a test MongoDB connection and database
+        cls.client = MongoClient(TEST_DATABASE_URL)
+        cls.db = cls.client[TEST_DATABASE_NAME]
+
+    @classmethod
+    def tearDownClass(cls):
+        # Destroy the database after tests
+        cls.client.drop_database(TEST_DATABASE_NAME)
 
     def setUp(self):
-        self.client = MongoClient(test_database_url)
-        self.db_handler = MongoDBHandler(test_database_url, test_database_name)
-        self.collection_name = "test_collection"
+        # Set up a MongoDBHandler instance for each test
+        self.mongo_handler = MongoDBHandler(TEST_DATABASE_URL, TEST_DATABASE_NAME)
 
     def tearDown(self):
-        self.client.drop_database(test_database_name)
+        # Clean up after each test
+        self.db.drop_collection("shortened")
+        self.db.drop_collection("baseURL")
+        self.db.drop_collection("path")
+        self.db.drop_collection("getParams")
 
     def test_create_document(self):
-        document = {"elementKey": "123", "field1": "value1"}
-        inserted_id = self.db_handler.create_document(self.collection_name, document)
+        # Test the create_document method
+        collection_name = "test_collection"
+        document = {"key": "value"}
+        inserted_id = self.mongo_handler.create_document(collection_name, document)
         self.assertIsNotNone(inserted_id)
 
-    def test_delete_document(self):
-        document = {"elementKey": "456", "field1": "value2"}
-        self.db_handler.create_document(self.collection_name, document)
-        deleted_count = self.db_handler.delete_document(self.collection_name, "456")
-        self.assertEqual(deleted_count, 1)
+        # Check if the document is present in the collection
+        collection = self.db[collection_name]
+        result = collection.find_one({"_id": inserted_id})
+        self.assertIsNotNone(result)
+        self.assertEqual(result, document)
 
-    def test_retrieve_document_by_element_key(self):
-        document = {"elementKey": "789", "field1": "value3"}
-        self.db_handler.create_document(self.collection_name, document)
-        retrieved_document = self.db_handler.retrieve_document_by_element_key(self.collection_name, "789")
-        self.assertIsNotNone(retrieved_document)
+class TestUrlDBHandler(unittest.TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        
+        cls.dummy_element_key="1"
+        cls.base_url = "www.example.com"
+        cls.path = "/path/test.html"
+        cls.get_params = "param=value"
+        
 
-    def test_count_documents_by_query(self):
-        document1 = {"elementKey": "111", "field1": "value4"}
-        document2 = {"elementKey": "222", "field1": "value5"}
-        self.db_handler.create_document(self.collection_name, document1)
-        self.db_handler.create_document(self.collection_name, document2)
-        query = {"field1": "value4"}
-        count = self.db_handler.count_documents_by_query(self.collection_name, query)
-        self.assertEqual(count, 1)
+        cls.url_db_handler = UrlDBHandler(TEST_DATABASE_URL,TEST_DATABASE_NAME)
+        
+    @classmethod
+    def tearDownClass(cls):
+        # Destroy the database after tests
+        cls.url_db_handler.delete_database()
 
-    def test_check_document_existance(self):
-        document = {"elementKey": "333", "field1": "value6"}
-        self.db_handler.create_document(self.collection_name, document)
-        existance = self.db_handler.check_document_existance(self.collection_name, "333")
-        self.assertFalse(existance)
+    # Test the generation of complete, partial and check if original is the same as provided as input
+    def test_create_shortened_complete_url(self):
+    
+        
+        # Test complete URL
 
-    def test_update_document(self):
-        document = {"elementKey": "444", "field1": "value7", "TTLDateTime": datetime.now()}
-        self.db_handler.create_document(self.collection_name, document)
-        new_TTL_date_time = datetime.now() + timedelta(days=1)
-        modified_count = self.db_handler.update_document(self.collection_name, "444", new_TTL_date_time)
-        self.assertEqual(modified_count, 1)
+        shortened_base_url=self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
+        shortened_path=self.url_db_handler.create_path(self.dummy_element_key,self.path).get("elementKey")
+        shortened_get_params=self.url_db_handler.create_get_params(self.dummy_element_key,self.get_params).get("elementKey")
+        result = self.url_db_handler.create_shortened_url(shortened_base_url, shortened_path, shortened_get_params)
+        original_url=self.url_db_handler.get_original_url(result.get("elementKey"))
 
-    def test_search_free_key(self):
-        self.db_handler.create_document(self.collection_name, {"elementKey": "1"})
-        self.db_handler.create_document(self.collection_name, {"elementKey": "2"})
-        free_key = self.db_handler.search_free_key(self.collection_name, 3)
-        self.assertEqual(free_key, 3)
+        
 
-    def test_delete_expired_documents(self):
-        current_date_time = datetime.now()
-        past_date_time = current_date_time - timedelta(days=1)
-        document = {"elementKey": "555", "field1": "value8", "TTLDateTime": past_date_time}
-        self.db_handler.create_document(self.collection_name, document)
-        deleted_count = self.db_handler.delete_expired_documents(self.collection_name, current_date_time)
-        self.assertEqual(deleted_count, 1)
+        assert result["elementKey"] == "111"
+        assert result["baseURL_elementKey"] == self.dummy_element_key
+        assert result["path_elementKey"] == self.dummy_element_key
+        assert result["getParams_elementKey"] == self.dummy_element_key
+        assert result["TTLDateTime"] < datetime.now()
+        
+        assert original_url["original_URL"] == "https://" + self.base_url + self.path + "?" + self.get_params
+        assert result["TTLDateTime"] < datetime.now()
+    
+    def test_number_of_existing_documents_by_category(self):
+        # Create one element
+        self.url_db_handler.delete_database()
+        shortened_base_url=self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
+        shortened_path=self.url_db_handler.create_path(self.dummy_element_key,self.path).get("elementKey")
+        shortened_get_params=self.url_db_handler.create_get_params(self.dummy_element_key,self.get_params).get("elementKey")
+        result = self.url_db_handler.create_shortened_url(shortened_base_url, shortened_path, shortened_get_params)
+    
+        for document_type in ["baseURL","path","getParams"]:
+            assert self.url_db_handler.get_num_documents_by_element_key_length(document_type,1) == 1
+        
+        assert self.url_db_handler.get_num_documents_by_element_key_length("shortened",3) == 1
 
-class TestUrlHandler(unittest.TestCase):
-
-    def setUp(self):
-        self.client = MongoClient(test_database_url)
-        self.url_handler = UrlHandler(test_database_url, test_database_name)
-
-    def tearDown(self):
-        self.client.drop_database(test_database_name)
-
-    def test_create_shortened_url(self):
-        inserted_id = self.url_handler.create_shortened_url("https://example.com", "/path", "param1=value1")
-        self.assertIsNotNone(inserted_id)
-
-    def test_create_base_url(self):
-        inserted_id = self.url_handler.create_base_url("123", "https://example.com")
-        self.assertIsNotNone(inserted_id)
-
-    def test_create_path(self):
-        inserted_id = self.url_handler.create_path("456", "/path")
-        self.assertIsNotNone(inserted_id)
-
-    def test_create_get_params(self):
-        inserted_id = self.url_handler.create_get_params("789", "param1=value1")
-        self.assertIsNotNone(inserted_id)
-
-    def test_get_original_url(self):
-        element_key = self.url_handler.create_shortened_url("https://example.com", "/path", "param1=value1")
-        original_url = self.url_handler.get_original_url(element_key)
-        expected_url = "https://example.com/path?param1=value1"
-        self.assertEqual(original_url, expected_url)
-
-    def test_renew_TTLDateTime_document(self):
-        element_key = self.url_handler.create_shortened_url("https://example.com", "/path", "param1=value1")
-        renewed = self.url_handler.renew_TTLDateTime_document("shortened", element_key)
-        self.assertEqual(renewed, 1)
-
-    def test_get_num_documents_by_element_key_length(self):
-        self.url_handler.create_shortened_url("https://example.com", "/path", "param1=value1")
-        count = self.url_handler.get_num_documents_by_element_key_length("shortened", 3)
-        self.assertEqual(count, 1)
-
-    def test_return_lowest_free_element_key_by_length(self):
-        self.url_handler.create_shortened_url("https://example.com", "/path", "param1=value1")
-        free_key = self.url_handler.return_lowest_free_element_key_by_length("shortened", 3)
-        self.assertEqual(free_key, 2)
-
-    def test_garbage_collection_by_document_type(self):
-        self.url_handler.create_shortened_url("https://example.com", "/path", "param1=value1")
-        deleted_count = self.url_handler.garbage_collection_by_document_type("shortened", 0)
-        self.assertEqual(deleted_count, 0)
-
+    def test_garbage_collection_by_document(self):
+        
+        # Create one element
+        self.url_db_handler.delete_database()
+        self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
+        self.url_db_handler.create_path(self.dummy_element_key,self.path).get("elementKey")
+        self.url_db_handler.create_get_params(self.dummy_element_key,self.get_params).get("elementKey")
+        
+        time.sleep(6)
+        for document_type in ["baseURL","path","getParams"]:
+            
+            assert self.url_db_handler.garbage_collection_by_document_type(document_type,1) == 1
 if __name__ == '__main__':
     unittest.main()

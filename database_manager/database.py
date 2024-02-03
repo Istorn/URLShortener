@@ -4,60 +4,60 @@ from datetime import datetime, timedelta
 class MongoDBHandler:
     def __init__(self, database_url, database_name):
         self.client=MongoClient(database_url)
-        self.db=self.client[database_name]
+        self.db_name=self.client[database_name]
 
     def create_document(self, collection_name, document):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         result=collection.insert_one(document)
         return result.inserted_id
 
     def delete_document(self, collection_name, element_key):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         result=collection.delete_one({"elementKey":str(element_key) })
         return result.deleted_count
     
     def retrieve_shortened_by_its_elements(self,base_url_element_key,path_element_key,get_params_element_key):
-        collection=self.db["shortened"]
+        collection=self.db_name["shortened"]
         result=collection.find({"baseURL_elementKey": base_url_element_key, "path_elementKey": path_element_key, "getParams_elementKey": get_params_element_key})
         return result if result is not None else None
 
     def retrieve_base_url(self,base_url):
-        collection=self.db["baseURL"]
+        collection=self.db_name["baseURL"]
         result=collection.find_one({"baseURL": base_url})
         return result if result is not None else None
     
     def retrieve_path(self,path):
-        collection=self.db["path"]
+        collection=self.db_name["path"]
         result=collection.find_one({"path": path})
         return result if result is not None else None
     
     def retrieve_getParams(self,getParams):
-        collection=self.db["getParams"]
+        collection=self.db_name["getParams"]
         result=collection.find_one({"getParams": getParams})
         return result if result is not None else None
 
     def retrieve_document_by_element_key(self, collection_name, element_key):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         result=collection.find_one({"elementKey": element_key})
         return result if result is not None else None
     
     def count_documents_by_query(self,collection_name, query=None):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         return collection.count_documents(query)
     
     def check_document_existance(self, collection_name, element_key):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         result=collection.find_one({"elementKey": element_key})
         return result if result is not None else None
 
     def get_document_by_id(self,collection_name,id):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         result=collection.find_one({"_id":id})
         return result if result is not None else None
 
     # Update mostly limited to renew the TTLDateTime
     def update_document(self, collection_name, element_key, new_TTL_date_time):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         result=collection.update_one({"elementKey": str(element_key)},{"$set": {"TTLDateTime": new_TTL_date_time}})
         return result
 
@@ -78,7 +78,7 @@ class MongoDBHandler:
 
     # Delete all of the document of a certain collection having expired TTL
     def delete_expired_documents(self, collection_name, time_passed):
-        collection=self.db[collection_name]
+        collection=self.db_name[collection_name]
         result=collection.delete_many({"TTLDateTime": {"$lt": time_passed}}).deleted_count
         return result
 
@@ -96,7 +96,10 @@ class UrlDBHandler:
             self.db_handler=MongoDBHandler(database_url, database_name)
             self.initialized=True
         
-
+    # delete database
+    def delete_database(self):
+        self.db_handler.client.drop_database(self.db_handler.db_name)
+            
     # Creator for the for document entities
     def create_shortened_url(self, base_url, path, get_params):
         current_date_time=datetime.now()
@@ -126,13 +129,26 @@ class UrlDBHandler:
     def get_original_url(self,element_key):
         shorten_url=self.db_handler.retrieve_document_by_element_key("shortened",element_key)
         if shorten_url is not None:
+            
             # Take each sub-document
             base_url=self.db_handler.retrieve_document_by_element_key("baseURL",shorten_url.get("baseURL_elementKey"))
-            path=self.db_handler.retrieve_document_by_element_key("path",shorten_url.get("path_elementKey"))
-            get_params=self.db_handler.retrieve_document_by_element_key("getParams",shorten_url.get("getParams_elementKey"))
+            
+            # Verify if the URL has path and GET parameters
+            if shorten_url.get("path_elementKey") != "":
+                path_string=self.db_handler.retrieve_document_by_element_key("path",shorten_url.get("path_elementKey")).get("path","")
+            else:
+                path_string=""
+
+            if shorten_url.get("getParams_elementKey") != "":
+
+                # Adding the question mark to let the URL be compliant
+                get_params_string="?" + self.db_handler.retrieve_document_by_element_key("getParams",shorten_url.get("getParams_elementKey")).get("getParams")
+            else:
+                get_params_string=""
+            
 
             # Build up the final string: we default the strings as empty
-            return {"original_URL": "https://" + base_url.get("baseURL","") + path.get("path","") + "?" + get_params.get("getParams",""), "TTLDateTime":shorten_url.get("TTLDateTime")}
+            return {"original_URL": "https://" + base_url.get("baseURL","") + path_string + get_params_string, "TTLDateTime":shorten_url.get("TTLDateTime")}
         else:
             # no shorten URL is found 
             return "not_found"
