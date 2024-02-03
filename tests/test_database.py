@@ -3,23 +3,29 @@ from pymongo import MongoClient
 from database_manager import UrlDBHandler, MongoDBHandler
 from datetime import datetime
 import time
-from test_config import test_parameters
+
+test_parameters = {
+    'garbage_collection_TTL': 5,
+    'test_database_url': "mongodb://localhost:27017/",
+    'test_database_database': "unit_test_database"
+}
+    
 
 class TestMongoDBHandler(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Set up a test MongoDB connection and database
         cls.client = MongoClient(test_parameters["test_database_url"])
-        cls.db = cls.client[test_parameters["TEST_DATABASE_NAME"]]
+        cls.db = cls.client[test_parameters["test_database_database"]]
 
     @classmethod
     def tearDownClass(cls):
         # Destroy the database after tests
-        cls.client.drop_database(test_parameters["TEST_DATABASE_NAME"])
+        cls.client.drop_database(test_parameters["test_database_database"])
 
     def setUp(self):
         # Set up a MongoDBHandler instance for each test
-        self.mongo_handler = MongoDBHandler(test_parameters["test_database_url"], test_parameters["TEST_DATABASE_NAME"])
+        self.mongo_handler = MongoDBHandler(test_parameters["test_database_url"], test_parameters["test_database_database"])
 
     def tearDown(self):
         # Clean up after each test
@@ -52,7 +58,7 @@ class TestUrlDBHandler(unittest.TestCase):
         cls.get_params = "param=value"
         
 
-        cls.url_db_handler = UrlDBHandler(test_parameters["test_database_url"],test_parameters["TEST_DATABASE_NAME"])
+        cls.url_db_handler = UrlDBHandler(test_parameters["test_database_url"],test_parameters["test_database_database"])
         
     @classmethod
     def tearDownClass(cls):

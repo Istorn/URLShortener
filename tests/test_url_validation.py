@@ -4,19 +4,19 @@ from url_validation import is_valid_url
 class TestIsValidUrlFunction(unittest.TestCase):
 
     def test_valid_https_url_with_parameters(self):
-        url_to_check = "https://www.example.com/path?param1=value1&param2=value2"
-        expected_result = {"baseURL": "www.example.com", "path": "/path", "getParams": "param1=value1&param2=value2"}
+        url_to_check = "https://www.sito_di_prova.com/path?param1=value1&param2=value2"
+        expected_result = {"baseURL": "www.sito_di_prova.com", "path": "/path", "getParams": "param1=value1&param2=value2"}
         print(is_valid_url(url_to_check))
         self.assertEqual(is_valid_url(url_to_check), expected_result)
 
     def test_valid_https_url_without_parameters(self):
-        url_to_check = "https://www.example.com/path"
-        expected_result = {"baseURL": "www.example.com", "path": "/path", "getParams": ""}
+        url_to_check = "https://www.sito_di_prova.com/path"
+        expected_result = {"baseURL": "www.sito_di_prova.com", "path": "/path", "getParams": ""}
         print(is_valid_url(url_to_check))
         self.assertEqual(is_valid_url(url_to_check), expected_result)
 
     def test_invalid_url_missing_scheme(self):
-        invalid_url = "www.example.com"
+        invalid_url = "www.sito_di_prova.com"
         self.assertFalse(is_valid_url(invalid_url))
 
     def test_invalid_url_missing_netloc(self):
@@ -24,7 +24,7 @@ class TestIsValidUrlFunction(unittest.TestCase):
         self.assertFalse(is_valid_url(invalid_url))
 
     def test_invalid_url_http_scheme(self):
-        invalid_url = "http://www.example.com"
+        invalid_url = "http://www.sito_di_prova.com"
         self.assertFalse(is_valid_url(invalid_url))
 
     def test_invalid_url_empty_string(self):
@@ -54,25 +54,24 @@ class TestIsValidUrlFunction(unittest.TestCase):
                     "baseURL": "192.168.0.1",
                     "path": "",
                     "getParams": ""
-                }),  # IP address
+                }),  
                 ("https://www.com", {
                     "baseURL": "www.com",
                     "path": "",
                     "getParams": ""
-                }),  # Only extension
+                }),  
                 ("https://www.softwaretesingo2022.com", {
                     "baseURL": "www.softwaretesingo2022.com",
                     "path": "",
                     "getParams": ""
                 }),
-                ("https://www.example.com%20encoded", {
-                    "baseURL": "www.example.com%20encoded",
+                ("https://www.sito_di_prova.com%20encoded", {
+                    "baseURL": "www.sito_di_prova.com%20encoded",
                     "path": "",
                     "getParams": ""
-                }),
-                    # Encoded URL
-                ("https://www.example.com/", {
-                    "baseURL": "www.example.com",
+                }),   
+                ("https://www.sito_di_prova.com/", {
+                    "baseURL": "www.sito_di_prova.com",
                     "path": "/",
                     "getParams": ""
                 }),
@@ -81,8 +80,8 @@ class TestIsValidUrlFunction(unittest.TestCase):
                     "path": "",
                     "getParams": ""
                 }),
-                ("https://www.example.com/$pecial", {
-                    "baseURL": "www.example.com",
+                ("https://www.sito_di_prova.com/$pecial", {
+                    "baseURL": "www.sito_di_prova.com",
                     "path": "/$pecial",
                     "getParams":""
                 })
