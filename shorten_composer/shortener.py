@@ -27,6 +27,23 @@ class Shortener:
 
     # Shorten the URL
     def shorten_url(self, decomposed_url):
+        
+        # Check if the shorten URL already exists
+        already_existing_shortened=self.url_db_handler.get_shorten_by_basic_elements(decomposed_url)
+        if already_existing_shortened is not None:
+            # Check if it's expired
+            expiration_datetime = already_existing_shortened["TTLDateTime"] + timedelta(seconds=self.garbage_TTL)
+            if expiration_datetime > datetime.now():
+                self.url_db_handler.renew_TTLDateTime_document("shortened",already_existing_shortened.get("elementKey"))
+                return self.element_key_to_alphanumerical(already_existing_shortened.get("elementKey"))
+
+            else:
+                return "link_expired"
+            
+        # Check if we already maxed out the keys for shortened URL
+
+        if self.get_most_near_free_key_by_document_type("shortened","") == False:
+            return "MAX_GENERATED_KEY_FOR_SHORTEN_LINK"
 
         # Check if baseURL already exists and in case renew its TTL
         base_url=self.url_db_handler.check_existing_baseURL(decomposed_url["baseURL"])
