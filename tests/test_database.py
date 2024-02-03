@@ -72,6 +72,7 @@ class TestUrlDBHandler(unittest.TestCase):
         shortened_path=self.url_db_handler.create_path(self.dummy_element_key,self.path).get("elementKey")
         shortened_get_params=self.url_db_handler.create_get_params(self.dummy_element_key,self.get_params).get("elementKey")
         result = self.url_db_handler.create_shortened_url(shortened_base_url, shortened_path, shortened_get_params)
+        
         original_url=self.url_db_handler.get_original_url(result.get("elementKey"))
 
         
@@ -98,6 +99,20 @@ class TestUrlDBHandler(unittest.TestCase):
             assert self.url_db_handler.get_num_documents_by_element_key_length(document_type,1) == 1
         
         assert self.url_db_handler.get_num_documents_by_element_key_length("shortened",3) == 1
+    
+    def test_get_shortened_by_its_elements(self):
+        self.url_db_handler.delete_database()
+        # Create one element
+        
+        shortened_base_url=self.url_db_handler.create_base_url(self.dummy_element_key,self.base_url).get("elementKey")
+        shortened_path=self.url_db_handler.create_path(self.dummy_element_key,self.path).get("elementKey")
+        shortened_get_params=self.url_db_handler.create_get_params(self.dummy_element_key,self.get_params).get("elementKey")
+        original_shorten = self.url_db_handler.create_shortened_url(shortened_base_url, shortened_path, shortened_get_params)
+        retrieved_shorten=self.url_db_handler.get_shorten_by_basic_elements({"baseURL":self.base_url,"path":self.path, "getParams": self.get_params})
+
+        assert original_shorten["elementKey"] == retrieved_shorten.get("elementKey")
+
+        
 
     def test_garbage_collection_by_document(self):
         
@@ -113,5 +128,8 @@ class TestUrlDBHandler(unittest.TestCase):
         for document_type in ["baseURL","path","getParams","shortened"]:
             
             assert self.url_db_handler.garbage_collection_by_document_type(document_type,datetime.now()) == 1
+    
+    
+
 if __name__ == '__main__':
     unittest.main()

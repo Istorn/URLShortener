@@ -18,7 +18,7 @@ class MongoDBHandler:
     
     def retrieve_shortened_by_its_elements(self,base_url_element_key,path_element_key,get_params_element_key):
         collection=self.db_name["shortened"]
-        result=collection.find({"baseURL_elementKey": base_url_element_key, "path_elementKey": path_element_key, "getParams_elementKey": get_params_element_key})
+        result=collection.find_one({"baseURL_elementKey": base_url_element_key, "path_elementKey": path_element_key, "getParams_elementKey": get_params_element_key})
         return result if result is not None else None
 
     def retrieve_base_url(self,base_url):
@@ -153,8 +153,30 @@ class UrlDBHandler:
             # no shorten URL is found 
             return "not_found"
         
-    # check if a shortened URL already exists
+    # get a shortened by the elements composing it
+    def get_shorten_by_basic_elements(self,decomposed_url):
+        base_url=self.db_handler.retrieve_base_url(decomposed_url["baseURL"])
+        if base_url is None:
+            return None
+        else:
+            base_url_element_key=base_url.get("elementKey")
+        if decomposed_url["path"] != "":
+            path=self.db_handler.retrieve_path(decomposed_url["path"])
+            if path is not None:
+                path_element_key=path.get("elementKey")
+            else:
+                path_element_key=""
+                
+        if decomposed_url["getParams"] != "":
+            get_params=self.db_handler.retrieve_getParams(decomposed_url["getParams"])
+            if get_params is not None:
+                get_params_element_key=get_params.get("elementKey")
+            else:
+                get_params_element_key=""
         
+        return self.db_handler.retrieve_shortened_by_its_elements(base_url_element_key,path_element_key,get_params_element_key)
+        
+    # check if a shortened URL already exists
     def check_existing_shortened(self,element_key):
         result=self.db_handler.retrieve_document_by_element_key("shortened",element_key)
         return result
