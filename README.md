@@ -78,4 +78,31 @@ You can create a Docker image by simply launching on the same project's folder:
 
 ## Encryption algorithm
 
-The shortener works with an algorithim in order to guarantee uniqueness amongst generated links.
+The shortener works with an algorithim in order to guarantee uniqueness amongst generated links. It works based on the 26 letters of the alphabet, uppercase and lowercase, plus the ten numbers: *so that there are 62 elements to base the encryption*. The maximum number of keys for a given length (`maxLengthKey`) is calculated using the formula:
+
+$`62^{maxLengthKey}`$`
+
+This expression represents the total number of unique keys that can be generated for the algorithm. If this limit is reached, *unless the garbage collector freed some keys*, the shortener **can't generated new keys**.
+
+### URL splitting
+
+The encryption is applied to each of the main three elements of an input URL:
+
+- base URL: is the domain of the provided URL
+- path: is the path provided as input following the base URL
+- GET parameters: this is the representation of the GET paramaters provided
+
+
+For instance, the following URL:
+
+`https://www.your_website.com/the/related/path/test.php?your=query&parameter=33`
+
+Will be split up as it follows:
+
+- base URL: *www.your_website.com*
+- path: */the/related/path/test.php*
+- GET parameters: *your=query&paramter=33*
+
+### Minimum cost-key
+
+The algorithm searches for the shortest and earliest free key to be assigned to the given element
