@@ -4,13 +4,14 @@ import time
 from database_manager import UrlDBHandler
 from shorten_composer import Shortener
 from url_validation import is_valid_url
+from test_config import test_parameters
 
 class TestShortener(unittest.TestCase):
 
     
     def setUp(self):
         
-        self.mock_db_handler = UrlDBHandler("127.0.0.1:27017","test_shortener_composer_db")
+        self.mock_db_handler = UrlDBHandler(test_parameters["test_database_url"],test_parameters["test_database_shortener"])
         self.shortener = Shortener(self.mock_db_handler, garbage_TTL=5, key_size=1)
 
     def test_shorten_and_generate_original_url(self):
